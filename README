@@ -1,0 +1,109 @@
+amitsilber
+nadavsh22
+
+
+=============================
+=      File description     =
+=============================
+oop: //package
+    ex6: //package
+        main:   //package
+            Sjavac.java //main class
+            FileReader.java
+            Ex6Regex.java   //holds all regex used in program
+            Ex6exception.java   //extends IOException
+            LineClassifier.java //
+            Section.java    //defines a section of code
+            GeneralSection.java //extends section
+            Block.java  //extends section
+            MethodSection.java  //extends section
+            Variable.java   //defines a variable initialized in code
+            VariableChecker.java    //checks if section object contains variable with specific name
+        LineCheckers:   //package
+            LineChecker.java    //interface
+            ReturnLineCheck.java    //implements LineChecker
+            CloseCheck.java    //implements LineChecker
+            MethodOpening.java    //implements LineChecker
+            CheckInitializingAndAssigning.java    //implements LineChecker
+            IfWhileOpen.java    //implements LineChecker
+            MethodCall.java    //implements LineChecker
+            CheckerAssignment    //implements LineChecker
+
+=============================
+=          Design           =
+=============================
+our program is built out of small units, each knows how to minimum number of tasks, relaying on other classes
+to do other tasks.
+the goal in the end is reading a piece of code, and being able to say if it is valid. we figured that the
+basic task is when given a single line of specific type to be able and decide if it valid. so we created
+LineChecker interface, where every inheriting class knows to check a certain type. the next stage was to be
+able to classify lines, in order to create the right checker.
+in order to decide whether a certain line is legal or not we must have some context (it's location, references
+to it or given by it, that being specifically important with variables, method declarations and calls, and
+if/while blocks). that led us to creating the Variable class (that we didn't think of when writing the uml)
+and the Section abstract Class (and the classes extending it). a section consists of its lines, variables it
+contains(or parameters in case of a method), and other sections in it.
+the next task was splitting the code lines in to the different section, we did so using FileReader, who is
+called by the main class, creates sections, and all that is left is for every class to check itself using the
+checkers.
+
+through all parts of our program we used regex, in order to classify code parts, recognizing and checking
+validity, so we wrote a class holding all the expressions so they could be used over and over again throughout
+the code.
+=============================
+=  Implementation details   =
+=============================
+program flow:
+    -Sjavac creates FileReader object, which divides the code into section objects,
+        there are three types of sections (classes implementing section): MethodSection(for methods in code),
+        Block (if/while blocks within methods),GeneralSection(the main scope).
+    -when a section is created it is defined by its opening line (for a method), given the lines it contains
+    and is responsible to check its own lines.
+    -every line is classified to a certain type using LineClassifier, and is checked using the specific
+    LineChecker after being classified.
+    -a declared variable is an object(see Variable class), holding the variables' properties.
+Exception Handling:
+    we wrote a new exception object called Ex6exception that extends javas IOException. these exception
+    objects are (in most cases) created in the line checkers themselves, when wrong code use is found in the
+    given line, and being thrown all the way up the call tree to the main class, printed with the specific
+    error message.
+=============================
+=    Answers to questions   =
+=============================
+used regex:
+methodCall = Pattern.compile("\\s*[a-zA-Z][\\w]*\\s*\\(");
+methodName = Pattern.compile("^[a-zA-Z][\\w]*");
+despite the similarity between these two regular expressions, both in purpose and in structure, there is a
+subtle difference. method call is used, mainly by LineClassifier to determine whether the beginning of a given
+line contains the format of a method call (which itself contains the methodName format).
+the regex methodName is used when the line was already cleared of whitespaces or brackets, for the purpose of
+finding the method name, and then using it (either to add a method, or to compare the name to other declared
+methods).
+
+how to handle more variable types:
+1)add type to variable constant fields
+2)write a regex matching type format
+3)add regex to LineClassifier
+4)changing CheckerAssignment and CheckInitializingAndAssignment to recognize the type
+5)add types to MethodCall, MethodOpening and IfWhileOpening
+
+how to  handle classes:
+1)create another section type, containing its own general section, a methods collection, fields
+(variable collection)
+2)enable LineChecker to recognize a class declaration (and relevant regex)
+3)line checker to verify opening (and relevant regex)
+4)if classes are created in same file(we dont wanna deal with file inheritance), add a class collection in
+general scope.
+5)if assuming all methods and fields are public (we're not dealing with modifiers yet...) so methods and
+fields could be called from another class:
+    -writing a LineChecker that reads lines of calls to methods and fields from other classes
+    (if we assume that all is private so there's no need for that checker)
+
+how to handle method return values:
+1)adding more cases for LineClassifier to recognize.
+2)LineCheckers for assigning methods return value to variables
+3)LineCheckers for return statement of method, checking return value fits the type.
+4)adding a type field to MethodSection
+5)updating IfWhileOpen to recognize and verify boolean methods as a condition.
+
+
